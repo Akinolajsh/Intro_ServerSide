@@ -1,51 +1,78 @@
-import http from "http";
+//we have four operations
+//write
+//read
+//update
+//delete
+//message, name, status, success, data
+import http from 'http'
 
-const food = ["Rice", "Beans", "Yam", "Eba", "Fufu", "Tea", "Bread"];
+interface iData {
+    message: string,
+    name: string,
+    status: number,
+    success: boolean,
+    data: any
+}
 
-const data: any = [];
+let data: iData = {
+    message: '',
+    name: '',
+    status: 0,
+    success: false,
+    data: null
+}
 
-Array.from({ length: 5 }, () => {
-  let numb = Math.floor(Math.random() * food.length);
-  let cost = Math.floor(Math.random() * 1000);
-  data.push({ item: food[numb], cost });
-});
+interface iDataEntry {
+    index: number,
+    name: string
+}
 
-console.log(data);
+let dataEntry: iDataEntry[] = [
+    { index: 1, name: 'Jecinta' },
+    { index: 2, name: 'Jemima' },
+]
 
-const port: number = 5544;
-const server: http.Server<
-  typeof http.IncomingMessage,
-  typeof http.ServerResponse
-> = http.createServer(
-  (
-    req: http.IncomingMessage,
-    res: http.ServerResponse<http.IncomingMessage>
-  ) => {
-    // const { method, url } = req;
-    // if (method === "GET" && url === "/") {
-    //   res.writeHead(200, { "content-type": "application/json" });
-    //   res.write("We are Good.....!\n");
-    //   res.write(JSON.stringify(data));
-    //   res.end();
-    // }
+const server = http.createServer(
+    (req: http.IncomingMessage, res: http.ServerResponse<http.IncomingMessage>) => {
+        const { method, url } = req;
 
-    let body: string = "";
-    let collection: {}[] = [];
+        let body: any = []
+        req.on("data", (chunk) => {
+            body += chunk
+            console.log(body)
+        })
+        req.on("data", () => {
+            // for Reading
+            if (method === 'GET' && url === '/') {
+                data.name = "GET method"
+                data.message = "GET is working"
+                data.status = 200
+                data.success = true
+                data.data = dataEntry
+                // for writing
+            } else if (method === 'POST' && url === '/') {
 
-    req.on("data", (chunk: Buffer) => {
-      body += chunk;
-      //   console.log(chunk);
-    });
-
-    req.on("data", () => {
-      let result: {} = JSON.parse(body);
-      collection.push(result);
-      res.write(JSON.stringify(collection));
-      res.end();
-    });
-  }
+                data.name = "POST method"
+                data.message = "POST is working"
+                data.status = 201
+                data.success = true
+                data.data = dataEntry
+            }
+            else {
+                data.name = "Error"
+                data.message = "404 Error"
+                data.status = 404
+                data.success = false
+                data.data = null
+            }
+            res.writeHead(data.status, { "content-type": "application/json" })
+            res.end(JSON.stringify(data))
+        })
+    }
 );
 
+const port: number = 1111;
+
 server.listen(port, () => {
-  console.log("Server listening on port");
-});
+    console.log('Listening on :', port)
+})
